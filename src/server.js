@@ -2,7 +2,11 @@ const express = require('express')
 
 const server = express()
 
+const Tesseract = require('tesseract.js')
+
 const resize = require('./resize')
+
+const path = require('path')
 
 // routing
 server.get('/', (req, res) => {
@@ -30,7 +34,23 @@ server.get('/', (req, res) => {
   }
 
   res.type(`image/${format || 'png'}`)
-  resize('006.jpg', format, top, left, width, height).pipe(res)
+
+  let lp = path.resolve(__dirname, '..', 'trained_data', 'extracted')
+  console.log(lp)
+  
+  Tesseract.create({
+    langPath: lp
+  }).recognize(resize('006.jpg', format, top, left, width, height), { lang: 'jpn'})
+    .then((result) => {
+      console.log(result.text)
+    })
+    .catch((error) => {
+      console.error(error)
+    })
+    .finally(() => {
+      console.log('Done!')
+    })
+  // resize('006.jpg', format, top, left, width, height).pipe(res)
 })
 
 server.listen(4080, () => {
