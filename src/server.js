@@ -34,22 +34,33 @@ server.get('/', (req, res) => {
   }
 
   res.type(`image/${format || 'png'}`)
+  res.setHeader('Content-Type', 'application/json')
 
   let lp = path.resolve(__dirname, '..', 'trained_data', 'extracted')
   console.log(lp)
   
-  Tesseract.create({
-    langPath: lp
-  }).recognize(resize('006.jpg', format, top, left, width, height), { lang: 'jpn'})
-    .then((result) => {
-      console.log(result.text)
+  //
+  resize('006.jpg', format, top, left, width, height)
+    .then((ibuff) => {
+      Tesseract.recognize(ibuff, { lang: path.resolve(lp, 'jpn')})
+        .then((result) => {
+          console.log(result.text)
+          res.send(JSON.stringify({ text: result.text }, null, 3))
+        })
+        .catch((error) => {
+          console.error(error)
+          res.error(error)
+        })
+        .finally(() => {
+          console.log('Done!')
+          res.flushHeaders()
+        })
+    }).catch((err) => {
+      console.error(err)
+      res.error(err)
+      res.flushHeaders()
     })
-    .catch((error) => {
-      console.error(error)
-    })
-    .finally(() => {
-      console.log('Done!')
-    })
+  
   // resize('006.jpg', format, top, left, width, height).pipe(res)
 })
 
